@@ -1,0 +1,24 @@
+{
+    "name": "dan8551/yii2-weather-bundle",
+    "description": "Yii2 Weather Bundle",
+    "keywords": ["yii2", "weather", "bootstrap4"],
+    "homepage": "https://github.com/dan8551/yii2-weather-bundle",
+    "type": "yii2-extension",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Daniel Orton",
+            "email": "dan.orton84@gmail.com",
+            "homepage": "https://github.com/dan8551/yii2-weather-bundle"
+        }
+    ],
+    "minimum-stability": "stable",
+    "require": {
+    },
+    "autoload": {
+        "psr-4": {
+            "dan8551\\components\\weatherBundle\\": ""
+        }
+    }
+}
+
