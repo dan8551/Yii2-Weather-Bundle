@@ -6,14 +6,20 @@
 
 
 
-function WeatherBundle(){
-    var latStr = 0.0;
-    var lonStr = 0.0;
-    var units = "metric";
+function WeatherBundle(lat, lon, weatherUrl, units){
+//    var latStr = 0.0;
+//    var lonStr = 0.0;
     var weatherDir;
+    
+    //construct
+    this.latStr = lat;
+    this.lonStr = lon;
+    this.weatherUrl = weatherUrl;
+    this.units = units;
+    return this;
 }
 
-WeatherBundle.currentWeather = function(data)
+WeatherBundle.prototype.currentWeather = function(data)
 {
 //    console.log(data);
     updateWeatherPattern(data.weather, this.weatherDir);
@@ -29,7 +35,7 @@ WeatherBundle.currentWeather = function(data)
     updateVisibility(data.visibility);
 }
 
-WeatherBundle.hourlyWeather = function(data)
+WeatherBundle.prototype.hourlyWeather = function(data)
 {
 //    console.log(data);
     for(const [key, value] of Object.entries(data)){
@@ -47,7 +53,7 @@ WeatherBundle.hourlyWeather = function(data)
  * @param {type} data
  * @returns {undefined}
  */
-WeatherBundle.dailyWeather = function(data)
+WeatherBundle.prototype.dailyWeather = function(data)
 {
 //    console.log(data);
 }
@@ -57,45 +63,47 @@ WeatherBundle.dailyWeather = function(data)
  * @param {type} data
  * @returns {undefined}
  */
-WeatherBundle.minuteWeather = function(data)
+WeatherBundle.prototype.minuteWeather = function(data)
 {
 //    console.log(data);
 }
 
-WeatherBundle.updateWeather = async function(time, hourly=true){
+WeatherBundle.prototype.updateWeather = async function(time, hourly=true){
     var hourlyInt = hourly ? 1 : 0;
+    console.log(this.weatherDir);
+    var scope = this;
     $.ajax({
-        url: "https://admin.yii.rsocreations.co.uk/weather-cache-location/get-weather?lat="+this.latStr+"&lon="+this.lonStr+"&time="+time+"&hourly="+hourlyInt,
+        url: this.weatherUrl+"?lat="+this.latStr+"&lon="+this.lonStr+"&time="+time+"&hourly="+hourlyInt,
         error: function(data){
             console.log(data);
         },
         success: function(data){
             data = JSON.parse(data);
             console.log(data);
-            updateToD(data, hourly);
-            updateWeatherPattern(data, this.weatherDir, hourly);
-            updateTemp(data, hourly);
-            updateWind(data, hourly);
+            scope.updateToD(data, hourly);
+            scope.updateWeatherPattern(data, scope.weatherDir, hourly);
+            scope.updateTemp(data, hourly);
+            scope.updateWind(data, hourly);
             if(!("precipitation" in data)) {
                 data.precipitation = {};
                 data.precipitation.value = 0;
             }
-            updatePrecipitation(data.precipitation, hourly);
-            updateClouds(data, hourly);
-            updateVisibility(data.visibility, hourly);
+            scope.updatePrecipitation(data.precipitation, hourly);
+            scope.updateClouds(data, hourly);
+            scope.updateVisibility(data.visibility, hourly);
         }
     });
 }
 
-WeatherBundle.getWeather = function(weatherDirFromBackend, timeVal){
+WeatherBundle.prototype.getWeather = function(weatherDirFromBackend, timeVal){
     if(typeof(weatherDirFromBackend) != undefined)      //only need weatherDir once
         this.weatherDir = weatherDirFromBackend;
 //    var time = $('#time').html();
     var time = timeVal;
-    updateWeather(time, false);
+    this.updateWeather(time, false);
 }
 
-WeatherBundle.updateWeatherPattern = function(data, weatherDir, hourly){
+WeatherBundle.prototype.updateWeatherPattern = function(data, weatherDir, hourly){
 //    console.log(data);
     switch(data.weather_id){
         case 200:   //thunderstorm light rain
@@ -175,7 +183,7 @@ WeatherBundle.updateWeatherPattern = function(data, weatherDir, hourly){
     $('#weather').append(weatherImg); 
 }
 
-WeatherBundle.updateToD = function(data, hourly){
+WeatherBundle.prototype.updateToD = function(data, hourly){
     if(hourly)
         return;
     var sunUpTime = new Date(data.sunrise);
@@ -186,7 +194,8 @@ WeatherBundle.updateToD = function(data, hourly){
     $('#sunDown').append(sunDown);
 }
 
-WeatherBundle.updateTemp = function(data, hourly){
+WeatherBundle.prototype.updateTemp = function(data, hourly){
+    console.log(data);
     var tempMin = data.temp_min;
     var tempMax = data.temp_max;
     var currTemp = '<p>'+data.temp+'&#xb0;C</p>';
@@ -197,7 +206,7 @@ WeatherBundle.updateTemp = function(data, hourly){
     $('#temperature').append(currTemp);
 }
 
-WeatherBundle.updateWind = function(data, hourly){
+WeatherBundle.prototype.updateWind = function(data, hourly){
     var gust;
     if(typeof(data.speed) != undefined)
     {
@@ -212,7 +221,7 @@ WeatherBundle.updateWind = function(data, hourly){
         else
             gust = 0;
     }
-
+console.log(this);
     var wind = '<p>'+speed+' mph</p>';
     gust = '<p>'+gust+' mph</p>';
     var dir = '<p>'+data.wind_direction+'</p>';
@@ -229,7 +238,7 @@ WeatherBundle.updateWind = function(data, hourly){
     $('#windDir').append(dir);
 }
 
-WeatherBundle.updatePrecipitation = function(data, hourly) {
+WeatherBundle.prototype.updatePrecipitation = function(data, hourly) {
     var precipitation = '<p>'+data.value+' mm</p>';
     var mode = '<p>'+data.mode+'</p>';
     if(hourly){
@@ -239,7 +248,7 @@ WeatherBundle.updatePrecipitation = function(data, hourly) {
     $('#precipitation').append(precipitation);
 }
 
-WeatherBundle.updateClouds = function(data, hourly) {
+WeatherBundle.prototype.updateClouds = function(data, hourly) {
     if(typeof(data.all) != 'undefined')
         var clouds = '<p>'+data.all+'%</p>';
     else
@@ -251,7 +260,7 @@ WeatherBundle.updateClouds = function(data, hourly) {
     $('#clouds').append(clouds);
 }
 
-WeatherBundle.updateVisibility = function(data, hourly) {
+WeatherBundle.prototype.updateVisibility = function(data, hourly) {
     var visibility = '<p>'+data+' m</p>';
     if(hourly){
         $('#visibility').empty();

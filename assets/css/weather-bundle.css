@@ -11,6 +11,18 @@ and open the template in the editor.
 See https://codepen.io/miaamen/pen/mdyQxPy
 */
 
+.weatherBox {
+    height: 80px;
+    margin-bottom: 10px;
+    border: 1px solid #000000;
+    border-radius: 15px;
+    text-align: center;
+}
+
+.weatherBox p {
+    margin: 0px;
+}
+
 .weather-sun,.weather-cloud,.weather-snow,.weather-cloudAndSun,.weather-rain{
         width: 200px;
         height: 200px;

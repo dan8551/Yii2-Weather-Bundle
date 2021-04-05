@@ -5,9 +5,9 @@ namespace dan8551\components\weatherBundle;
 use Yii;
 use yii\web\AssetBundle;
 
-class RemoteModalAsset extends AssetBundle
+class WeatherBundleAsset extends AssetBundle
 {
-     public $sourcePath = '@vendor/dan8551/yii2-wether-bundle/assets';
+     public $sourcePath = '@vendor/dan8551/yii2-weather-bundle/assets';
 
     public $depends = [
         'yii\web\YiiAsset',
