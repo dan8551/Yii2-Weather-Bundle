@@ -6,18 +6,26 @@
 
 
 
-function WeatherBundle(lat, lon, weatherUrl, units){
+function WeatherBundle(lat, lon, weatherUrl, units, drone_arr, timeVal){
 //    var latStr = 0.0;
 //    var lonStr = 0.0;
     var weatherDir;
     
     //construct
+    this.timeVal = timeVal;
     this.latStr = lat;
     this.lonStr = lon;
     this.weatherUrl = weatherUrl;
     this.units = units;
+    this.drone_arr = drone_arr;
+    this.goodToFly = [];
+    this.success = '#28a745';
+    this.warning = '#ffc107';
+    this.danger = '#dc3545';
     return this;
 }
+
+WeatherBundle.prototype.drone_arr = [];
 
 WeatherBundle.prototype.currentWeather = function(data)
 {
@@ -95,12 +103,13 @@ WeatherBundle.prototype.updateWeather = async function(time, hourly=true){
     });
 }
 
-WeatherBundle.prototype.getWeather = function(weatherDirFromBackend, timeVal){
+WeatherBundle.prototype.getWeather = async function(weatherDirFromBackend, timeVal){
+    console.log(timeVal);
     if(typeof(weatherDirFromBackend) != undefined)      //only need weatherDir once
         this.weatherDir = weatherDirFromBackend;
 //    var time = $('#time').html();
-    var time = timeVal;
-    this.updateWeather(time, false);
+    this.time = timeVal;
+    this.updateWeather(this.time, false);
 }
 
 WeatherBundle.prototype.updateWeatherPattern = function(data, weatherDir, hourly){
@@ -181,6 +190,7 @@ WeatherBundle.prototype.updateWeatherPattern = function(data, weatherDir, hourly
         $('#weather').append('<p>Weather</p>');
     }
     $('#weather').append(weatherImg); 
+    $('#weather').css('background-color', this.warning);
 }
 
 WeatherBundle.prototype.updateToD = function(data, hourly){
@@ -192,22 +202,23 @@ WeatherBundle.prototype.updateToD = function(data, hourly){
     var sunDown = ('0'+sunDownTime.getHours()).slice(-2)+':'+('0'+sunDownTime.getMinutes()).slice(-2)+':'+('0'+sunDownTime.getSeconds()).slice(-2);
     $('#sunUp').append(sunUp);
     $('#sunDown').append(sunDown);
+    $('#TOD').css('background-color', this.warning);
 }
 
 WeatherBundle.prototype.updateTemp = function(data, hourly){
     console.log(data);
-    var tempMin = data.temp_min;
-    var tempMax = data.temp_max;
-    var currTemp = '<p>'+data.temp+'&#xb0;C</p>';
+    this.tempMin = data.temp_min;
+    this.tempMax = data.temp_max;
+    this.currTemp = '<p>'+data.temp+'&#xb0;C</p>';
     if(hourly){
         $('#temperature').empty();
         $('#temperature').append('<p>Temperature</p>');
     }
-    $('#temperature').append(currTemp);
+    $('#temperature').append(this.currTemp);
 }
 
 WeatherBundle.prototype.updateWind = function(data, hourly){
-    var gust;
+//    var gust;
     if(typeof(data.speed) != undefined)
     {
         data.speed = data.wind_speed;
@@ -215,15 +226,15 @@ WeatherBundle.prototype.updateWind = function(data, hourly){
         data.deg = data.wind_deg == null ? 'Undefined' : data.wind_deg;
     }
     if(this.units == "metric"){
-        var speed = (data.speed * 2.237).toFixed(2);     //mph = m/s * 2.237
+        this.wind_speed = (data.speed * 2.237).toFixed(2);     //mph = m/s * 2.237
         if(typeof(data.gust) != undefined && data.gust != 'undefined')
-            gust = (data.gust * 2.237).toFixed(2);
+            this.wind_gust = (data.gust * 2.237).toFixed(2);
         else
             gust = 0;
     }
 console.log(this);
-    var wind = '<p>'+speed+' mph</p>';
-    gust = '<p>'+gust+' mph</p>';
+    var wind = '<p>'+this.wind_speed+' mph</p>';
+    var gust = '<p>'+this.wind_gust+' mph</p>';
     var dir = '<p>'+data.wind_direction+'</p>';
     if(hourly){
         $('#wind').empty();
@@ -236,9 +247,11 @@ console.log(this);
     $('#wind').append(wind);
     $('#gusts').append(gust);
     $('#windDir').append(dir);
+    $('#windDir').css('background-color', this.success);
 }
 
 WeatherBundle.prototype.updatePrecipitation = function(data, hourly) {
+    this.precipitation = data.value;
     var precipitation = '<p>'+data.value+' mm</p>';
     var mode = '<p>'+data.mode+'</p>';
     if(hourly){
@@ -250,9 +263,15 @@ WeatherBundle.prototype.updatePrecipitation = function(data, hourly) {
 
 WeatherBundle.prototype.updateClouds = function(data, hourly) {
     if(typeof(data.all) != 'undefined')
+    {
+        this.clouds = data.all;
         var clouds = '<p>'+data.all+'%</p>';
+    }
     else
+    {
+        this.clouds = data.clouds;
         var clouds = '<p>'+data.clouds+'%</p>';
+    }
     if(hourly){
         $('#clouds').empty();
         $('#clouds').append('<p>Clouds</p>');
@@ -261,10 +280,125 @@ WeatherBundle.prototype.updateClouds = function(data, hourly) {
 }
 
 WeatherBundle.prototype.updateVisibility = function(data, hourly) {
+    this.visibility = data;
     var visibility = '<p>'+data+' m</p>';
     if(hourly){
         $('#visibility').empty();
         $('#visibility').append('<p>Visibility</p>');
     }
     $('#visibility').append(visibility);
+}
+
+WeatherBundle.prototype.checkGoodToFly = function() 
+{
+    console.log(this.drone_arr.length);
+    for(var i=0; i<this.drone_arr.length; i++)
+    {
+        var drone = this.drone_arr[i];
+        console.log(drone);
+        this.checkTemperature(drone);
+        this.checkWind(drone);
+        this.checkGust(drone);
+        this.checkPrecipitation(drone);
+        this.checkCloudCover(drone);
+        this.checkVisibility(drone);
+    }
+    $('#goodToFly').append('<p>'+this.timeVal+'</p>');
+    if(this.goodToFly.includes(false))
+    {
+        $('#goodToFly').css('background-color', this.danger);
+    }else
+    {
+        console.log(this.goodToFly);
+        $('#goodToFly').css('background-color', this.success);
+        $('#goodToFly h2').html('Good To Fly');
+    }
+}
+
+WeatherBundle.prototype.checkTemperature = function(data)
+{
+    console.log(data);
+    if(data.min_operating_temp != 'undefined' && data.max_operating_temp != 'undefined' && data.min_operating_temp < this.currTemp && data.max_operating_temp > this.currTemp )
+    {
+        this.goodToFly.push(true);
+        $('#temperature').css('background-color', this.success);
+    }
+    else
+    {
+        this.goodToFly.push(false);
+        $('#temperature').css('background-color', this.danger);
+    }
+}
+
+WeatherBundle.prototype.checkWind = function(data)
+{
+    console.log(data.max_wind_speed_resistance > Math.max(this.wind_speed, this.wind_gust));
+    console.log(Math.max(parseInt(this.wind_speed), parseInt(this.wind_gust)));
+    if(data.max_wind_speed_resistance != 'undefined' && data.max_wind_speed_resistance > Math.max(this.wind_speed, this.wind_gust))
+    {
+        this.goodToFly.push(true);
+        $('#wind').css('background-color', this.success);
+    }
+    else
+    {
+        this.goodToFly.push(false);
+        $('#wind').css('background-color', this.danger);
+    }
+}
+
+WeatherBundle.prototype.checkGust = function(data)
+{
+    if(data.max_wind_speed_resistance != 'undefined' && data.max_wind_speed_resistance > this.wind_gust)
+    {
+        this.goodToFly.push(true);
+        $('#gusts').css('background-color', this.success);
+    }
+    else
+    {
+        this.goodToFly.push(false);
+        $('#gusts').css('background-color', this.danger);
+    }
+}
+
+WeatherBundle.prototype.checkPrecipitation = function(data)
+{
+    if(this.precipitation < 40)
+    {
+        this.goodToFly.push(true);
+        $('#precipitation').css('background-color', this.success);
+    }
+    else
+    {
+        this.goodToFly.push(false);
+        $('#precipitation').css('background-color', this.danger);
+    }
+}
+
+WeatherBundle.prototype.checkCloudCover = function(data)
+{
+    if(this.cloudCover == undefined || this.cloudCover < 75)
+    {
+        this.goodToFly.push(true);
+        $('#clouds').css('background-color', this.success);
+    }
+    else
+    {
+        this.goodToFly.push(false);
+        $('#clouds').css('background-color', this.warning);
+    }
+}
+
+WeatherBundle.prototype.checkVisibility = function(data)
+{
+    console.log(this.visibility);
+    if(this.visibility > 2000)
+    {
+        this.goodToFly.push(true);
+        $('#visibility').css('background-color', this.success);
+    }
+    else
+    {
+        this.goodToFly.push(false);
+        $('#visibility').css('background-color', this.warning);
+    }
 }

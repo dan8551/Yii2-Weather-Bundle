@@ -12,13 +12,17 @@ class WeatherBundle extends Widget
 {
     public $imageDir = '@vendor/dan8551/yii2-weather-bundle/assets/img';
     
-    public $timeVal;
+    public $timestamp = '';
     
     public $lat;
     
     public $lon;
     
     public $weatherUrl = '';
+    
+    public $droneModels;
+    
+    private $timeVal;
 
     /**
      * Overrides the parent function to load remote view into modal via Ajax.
@@ -27,7 +31,7 @@ class WeatherBundle extends Widget
     {
 	parent::run();
         $this->imageDir = Yii::$app->assetManager->publish($this->imageDir)[1];
-        $this->timeVal = Date("H:i:se");
+        $this->timeVal = Date("H:i:se", $this->timestamp);
 	$this->registerAssets();
         return $this->renderView();
     }
@@ -37,18 +41,20 @@ class WeatherBundle extends Widget
      */
     public function registerAssets()
     {
+        $jsTimeVal = Date('l d/m/Y H:i', $this->timestamp);
         $view = $this->getView();
         WeatherBundleAsset::register($view);
         $uuid = uniqid();
         $js = <<<JS
-            var wb = new WeatherBundle({$this->lat}, {$this->lon}, '{$this->weatherUrl}', 'metric');
+            var wb = new WeatherBundle({$this->lat}, {$this->lon}, '{$this->weatherUrl}', 'metric', {$this->droneModels}, '{$jsTimeVal}');
             wb.getWeather("{$this->imageDir}", "{$this->timeVal}");
+            setTimeout(function() { wb.checkGoodToFly(); }, 200);
         JS;
         $view->registerJs($js,View::POS_READY);
     }
     
     /**
-     * Gets the icon reprsented by "icon" name
+     * Gets the icon represented by "icon" name
      * 
      * @param string $icon
      * @param bool $animated 
@@ -76,8 +82,8 @@ class WeatherBundle extends Widget
     public function renderHeader()
     {
         $content = Html::tag('h2', 'Not Good To Fly', ['style' => 'margin: 0px; margin-top: 10px;']);
-        $content .= Html::tag('p', date('l d/m/Y H:i').' GMT');
-        $col = Html::tag('div',$content,['class' => 'col-md-12 weatherBox']);
+//        $content .= Html::tag('p', date('l d/m/Y H:i').' GMT');
+        $col = Html::tag('div',$content,['class' => 'col-md-12 weatherBox', 'id'=> 'goodToFly']);
         return $col;
     }
     
@@ -95,7 +101,7 @@ class WeatherBundle extends Widget
         $content = Html::tag('p', 'Time Of Day');
         $content .= Html::tag('p', $sunUpIcon . FAS::icon('long-arrow-alt-up'), ['id' => 'sunUp']);
         $content .= Html::tag('p', $sunDownIcon . FAS::icon('long-arrow-alt-down'), ['id' => 'sunDown']);
-        return Html::tag('div', $content, ['class' => 'col-md-4 weatherBox border border-dark']);
+        return Html::tag('div', $content, ['class' => 'col-md-4 weatherBox border border-dark', 'id' => 'TOD']);
     }
     
     public function renderTemperature()
