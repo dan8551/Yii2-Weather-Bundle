@@ -48,7 +48,6 @@ class WeatherBundle extends Widget
         $js = <<<JS
             var wb = new WeatherBundle({$this->lat}, {$this->lon}, '{$this->weatherUrl}', 'metric', {$this->droneModels}, '{$jsTimeVal}');
             wb.getWeather("{$this->imageDir}", "{$this->timeVal}");
-            setTimeout(function() { wb.checkGoodToFly(); }, 200);
         JS;
         $view->registerJs($js,View::POS_READY);
     }

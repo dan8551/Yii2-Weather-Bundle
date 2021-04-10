@@ -74,6 +74,18 @@ WeatherBundle.prototype.minuteWeather = function(data)
 
 WeatherBundle.prototype.updateWeather = async function(time, hourly=true){
     var hourlyInt = hourly ? 1 : 0;
+    var days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    if(hourly)
+    {
+        var timeArr = time.split(' ');
+        var dateArr = timeArr[0].split('-');
+        console.log(time.split(' '));
+        var dateObj = new Date();
+        dateObj.setFullYear(dateArr[0]);
+        dateObj.setMonth(dateArr[1]-1);
+        dateObj.setDate(dateArr[2]);
+        this.timeVal = days[dateObj.getDay()]+' '+dateArr[2]+'/'+dateArr[1]+'/'+dateArr[0] +' '+ timeArr[1] +' '+timeArr[2];
+    }
     var scope = this;
     $.ajax({
         url: this.weatherUrl+"?lat="+this.latStr+"&lon="+this.lonStr+"&time="+time+"&hourly="+hourlyInt,
@@ -93,6 +105,7 @@ WeatherBundle.prototype.updateWeather = async function(time, hourly=true){
             scope.updatePrecipitation(data.precipitation, hourly);
             scope.updateClouds(data, hourly);
             scope.updateVisibility(data.visibility, hourly);
+            scope.checkGoodToFly(hourly);
         }
     });
 }
@@ -280,7 +293,7 @@ WeatherBundle.prototype.updateVisibility = function(data, hourly) {
     $('#visibility').append(visibility);
 }
 
-WeatherBundle.prototype.checkGoodToFly = function() 
+WeatherBundle.prototype.checkGoodToFly = function(hourly) 
 {
     for(var i=0; i<this.drone_arr.length; i++)
     {
@@ -292,14 +305,16 @@ WeatherBundle.prototype.checkGoodToFly = function()
         this.checkCloudCover(drone);
         this.checkVisibility(drone);
     }
+    $('#goodToFly').empty()
     $('#goodToFly').append('<p>'+this.timeVal+'</p>');
     if(this.goodToFly.includes(false))
     {
         $('#goodToFly').css('background-color', this.danger);
+        $('#goodToFly').append('<h2>Not Good To Fly</h2>');
     }else
     {
         $('#goodToFly').css('background-color', this.success);
-        $('#goodToFly h2').html('Good To Fly');
+        $('#goodToFly').append('<h2>Good To Fly</h2>');
     }
 }
 
