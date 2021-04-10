@@ -45,13 +45,9 @@ WeatherBundle.prototype.currentWeather = function(data)
 
 WeatherBundle.prototype.hourlyWeather = function(data)
 {
-//    console.log(data);
     for(const [key, value] of Object.entries(data)){
         for(const [key, value] of Object.entries(data)){
-//            console.log(value);
             var time = new Date(value.dt*1000);
-//            time.setUTCSeconds();
-            console.log(time.getHours());
         }
     }
 }
@@ -78,7 +74,6 @@ WeatherBundle.prototype.minuteWeather = function(data)
 
 WeatherBundle.prototype.updateWeather = async function(time, hourly=true){
     var hourlyInt = hourly ? 1 : 0;
-    console.log(this.weatherDir);
     var scope = this;
     $.ajax({
         url: this.weatherUrl+"?lat="+this.latStr+"&lon="+this.lonStr+"&time="+time+"&hourly="+hourlyInt,
@@ -87,7 +82,6 @@ WeatherBundle.prototype.updateWeather = async function(time, hourly=true){
         },
         success: function(data){
             data = JSON.parse(data);
-            console.log(data);
             scope.updateToD(data, hourly);
             scope.updateWeatherPattern(data, scope.weatherDir, hourly);
             scope.updateTemp(data, hourly);
@@ -104,7 +98,6 @@ WeatherBundle.prototype.updateWeather = async function(time, hourly=true){
 }
 
 WeatherBundle.prototype.getWeather = async function(weatherDirFromBackend, timeVal){
-    console.log(timeVal);
     if(typeof(weatherDirFromBackend) != undefined)      //only need weatherDir once
         this.weatherDir = weatherDirFromBackend;
 //    var time = $('#time').html();
@@ -206,7 +199,6 @@ WeatherBundle.prototype.updateToD = function(data, hourly){
 }
 
 WeatherBundle.prototype.updateTemp = function(data, hourly){
-    console.log(data);
     this.tempMin = data.temp_min;
     this.tempMax = data.temp_max;
     this.currTemp = '<p>'+data.temp+'&#xb0;C</p>';
@@ -232,7 +224,6 @@ WeatherBundle.prototype.updateWind = function(data, hourly){
         else
             gust = 0;
     }
-console.log(this);
     var wind = '<p>'+this.wind_speed+' mph</p>';
     var gust = '<p>'+this.wind_gust+' mph</p>';
     var dir = '<p>'+data.wind_direction+'</p>';
@@ -291,11 +282,9 @@ WeatherBundle.prototype.updateVisibility = function(data, hourly) {
 
 WeatherBundle.prototype.checkGoodToFly = function() 
 {
-    console.log(this.drone_arr.length);
     for(var i=0; i<this.drone_arr.length; i++)
     {
         var drone = this.drone_arr[i];
-        console.log(drone);
         this.checkTemperature(drone);
         this.checkWind(drone);
         this.checkGust(drone);
@@ -309,7 +298,6 @@ WeatherBundle.prototype.checkGoodToFly = function()
         $('#goodToFly').css('background-color', this.danger);
     }else
     {
-        console.log(this.goodToFly);
         $('#goodToFly').css('background-color', this.success);
         $('#goodToFly h2').html('Good To Fly');
     }
@@ -317,7 +305,6 @@ WeatherBundle.prototype.checkGoodToFly = function()
 
 WeatherBundle.prototype.checkTemperature = function(data)
 {
-    console.log(data);
     if(data.min_operating_temp != 'undefined' && data.max_operating_temp != 'undefined' && data.min_operating_temp < this.currTemp && data.max_operating_temp > this.currTemp )
     {
         this.goodToFly.push(true);
@@ -332,8 +319,6 @@ WeatherBundle.prototype.checkTemperature = function(data)
 
 WeatherBundle.prototype.checkWind = function(data)
 {
-    console.log(data.max_wind_speed_resistance > Math.max(this.wind_speed, this.wind_gust));
-    console.log(Math.max(parseInt(this.wind_speed), parseInt(this.wind_gust)));
     if(data.max_wind_speed_resistance != 'undefined' && data.max_wind_speed_resistance > Math.max(this.wind_speed, this.wind_gust))
     {
         this.goodToFly.push(true);
@@ -390,7 +375,6 @@ WeatherBundle.prototype.checkCloudCover = function(data)
 
 WeatherBundle.prototype.checkVisibility = function(data)
 {
-    console.log(this.visibility);
     if(this.visibility > 2000)
     {
         this.goodToFly.push(true);
