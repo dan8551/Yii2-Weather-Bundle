@@ -22,6 +22,8 @@ class WeatherBundle extends Widget
     
     public $droneModels;
     
+    public $callback;
+    
     private $timeVal;
 
     /**
@@ -47,7 +49,7 @@ class WeatherBundle extends Widget
         $uuid = uniqid();
         $js = <<<JS
             var wb = new WeatherBundle({$this->lat}, {$this->lon}, '{$this->weatherUrl}', 'metric', {$this->droneModels}, '{$jsTimeVal}');
-            wb.getWeather("{$this->imageDir}", "{$this->timeVal}");
+            wb.getWeather("{$this->imageDir}", "{$this->timeVal}", {$this->callback});
         JS;
         $view->registerJs($js,View::POS_READY);
     }
